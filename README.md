@@ -20,6 +20,7 @@ Day-11-Guardrails-HITL-Responsible-AI/
 │   └── lab11_guardrails_hitl_solution.ipynb   # Solution (instructor only)
 ├── src/                                       # Local Python version
 │   ├── main.py                    # Entry point — run all parts or pick one
+│   ├── defense_pipeline.py        # Assignment pipeline: rate limit + guardrails + audit + monitoring
 │   ├── core/
 │   │   ├── config.py              # API key setup, allowed/blocked topics
 │   │   └── utils.py               # chat_with_agent() helper
@@ -35,6 +36,8 @@ Day-11-Guardrails-HITL-Responsible-AI/
 │   │   └── testing.py             # TODO 10-11: Before/after comparison, pipeline
 │   └── hitl/
 │       └── hitl.py                # TODO 12-13: Confidence router, HITL design
+├── audit_log.json                  # Exported audit trail from defense_pipeline.py
+├── individual_report.md            # Individual report for Assignment 11
 ├── requirements.txt
 └── README.md
 ```
@@ -44,15 +47,15 @@ Day-11-Guardrails-HITL-Responsible-AI/
 ### Google Colab (recommended)
 
 1. Upload `notebooks/lab11_guardrails_hitl.ipynb` to Google Colab
-2. Create a Google API Key at [Google AI Studio](https://aistudio.google.com/apikey)
-3. Save the API key in Colab Secrets as `GOOGLE_API_KEY`
+2. Create a ShopAIKey API key from your ShopAIKey dashboard
+3. Save the API key in Colab Secrets as `SHOPAIKEY_API_KEY`
 4. Run cells in order
 
 ### Local (Notebook)
 
 ```bash
 pip install -r requirements.txt
-export GOOGLE_API_KEY="your-api-key-here"
+export SHOPAIKEY_API_KEY="your-api-key-here"
 jupyter notebook notebooks/lab11_guardrails_hitl.ipynb
 ```
 
@@ -61,7 +64,7 @@ jupyter notebook notebooks/lab11_guardrails_hitl.ipynb
 ```bash
 cd src/
 pip install -r ../requirements.txt
-export GOOGLE_API_KEY="your-api-key-here"
+export SHOPAIKEY_API_KEY="your-api-key-here"
 
 # Run the full lab
 python main.py
@@ -77,13 +80,16 @@ python guardrails/input_guardrails.py
 python guardrails/output_guardrails.py
 python testing/testing.py
 python hitl/hitl.py
+
+# Assignment defense-in-depth pipeline
+python defense_pipeline.py
 ```
 
 ### Tools Used
 
-- **Google ADK** — Agent Development Kit (plugins, runners)
+- **Google ADK** — Agent Development Kit (plugins, runners, via LiteLLM adapter)
 - **NeMo Guardrails** — NVIDIA framework with Colang (declarative safety rules)
-- **Gemini 2.5 Flash/Flash Lite** — LLM backend (you can switch to other models if you want)
+- **ShopAIKey** — Unified provider endpoint (OpenAI-compatible + Gemini proxy)
 
 ## Lab Structure (2.5 hours)
 
@@ -100,18 +106,20 @@ python hitl/hitl.py
 
 1. **Security Report**: Before/after comparison of 5+ attacks (ADK + NeMo)
 2. **HITL Flowchart**: 3 decision points with escalation paths
+3. **Assignment Pipeline Output**: `audit_log.json` (20+ entries) from `src/defense_pipeline.py`
+4. **Individual Report**: `individual_report.md` (1-2 pages)
 
 ## 13 TODOs
 
 | # | Description | Framework |
 |---|-------------|-----------|
 | 1 | Write 5 adversarial prompts | - |
-| 2 | Generate attack test cases with AI | Gemini |
+| 2 | Generate attack test cases with AI | ShopAIKey-backed model |
 | 3 | Injection detection (regex) | Python |
 | 4 | Topic filter | Python |
 | 5 | Input Guardrail Plugin | Google ADK |
 | 6 | Content filter (PII, secrets) | Python |
-| 7 | LLM-as-Judge safety check | Gemini |
+| 7 | LLM-as-Judge safety check | ShopAIKey-backed model |
 | 8 | Output Guardrail Plugin | Google ADK |
 | 9 | NeMo Guardrails Colang config | NeMo |
 | 10 | Rerun 5 attacks with guardrails | Google ADK |

@@ -65,32 +65,45 @@ class ConfidenceRouter:
         Returns:
             RoutingDecision with routing action and metadata
         """
-        # TODO 12: Implement routing logic
-        #
-        # 1. Check if action_type is in HIGH_RISK_ACTIONS
-        #    -> If yes: always escalate (action="escalate", priority="high",
-        #       requires_human=True, reason="High-risk action: {action_type}")
-        #
-        # 2. Check confidence thresholds:
-        #    - confidence >= 0.9:
-        #      action="auto_send", priority="low",
-        #      requires_human=False, reason="High confidence"
-        #
-        #    - 0.7 <= confidence < 0.9:
-        #      action="queue_review", priority="normal",
-        #      requires_human=True, reason="Medium confidence — needs review"
-        #
-        #    - confidence < 0.7:
-        #      action="escalate", priority="high",
-        #      requires_human=True, reason="Low confidence — escalating"
+        # High-risk banking actions always need a human in the loop,
+        # even if the model is very confident, because the consequence of a mistake is large.
+        if action_type in HIGH_RISK_ACTIONS:
+            return RoutingDecision(
+                action="escalate",
+                confidence=confidence,
+                reason=f"High-risk action: {action_type}",
+                priority="high",
+                requires_human=True,
+            )
 
+        # Low-confidence answers should not be auto-sent because the model is signaling uncertainty.
+        if confidence < self.MEDIUM_THRESHOLD:
+            return RoutingDecision(
+                action="escalate",
+                confidence=confidence,
+                reason="Low confidence — escalating",
+                priority="high",
+                requires_human=True,
+            )
+
+        # Medium-confidence answers are usable, but a human should review them before release.
+        if confidence < self.HIGH_THRESHOLD:
+            return RoutingDecision(
+                action="queue_review",
+                confidence=confidence,
+                reason="Medium confidence — needs review",
+                priority="normal",
+                requires_human=True,
+            )
+
+        # High-confidence, low-risk answers can be sent automatically.
         return RoutingDecision(
             action="auto_send",
             confidence=confidence,
-            reason="TODO: implement routing logic",
+            reason="High confidence",
             priority="low",
             requires_human=False,
-        )  # TODO: Replace with implementation
+        )
 
 
 # ============================================================
@@ -109,27 +122,27 @@ class ConfidenceRouter:
 hitl_decision_points = [
     {
         "id": 1,
-        "name": "TODO: Name this decision point",
-        "trigger": "TODO: When does this trigger?",
-        "hitl_model": "TODO: human-in-the-loop / human-on-the-loop / human-as-tiebreaker",
-        "context_needed": "TODO: What does the reviewer need to see?",
-        "example": "TODO: Give a concrete example scenario",
+        "name": "High-value transfer approval",
+        "trigger": "The user requests a money transfer above a configured risk threshold or to a new beneficiary.",
+        "hitl_model": "human-in-the-loop",
+        "context_needed": "Recipient details, transfer amount, account history, recent login risk, and the model's confidence.",
+        "example": "A customer asks to send 250,000,000 VND to a new account; a banker confirms the request before execution.",
     },
     {
         "id": 2,
-        "name": "TODO: Name this decision point",
-        "trigger": "TODO: When does this trigger?",
-        "hitl_model": "TODO: human-in-the-loop / human-on-the-loop / human-as-tiebreaker",
-        "context_needed": "TODO: What does the reviewer need to see?",
-        "example": "TODO: Give a concrete example scenario",
+        "name": "Identity and account changes",
+        "trigger": "The assistant is asked to change passwords, personal details, KYC information, or account ownership.",
+        "hitl_model": "human-on-the-loop",
+        "context_needed": "User identity signals, audit trail, and the exact field being changed so the reviewer can validate legitimacy.",
+        "example": "A user asks to update a phone number and email address after reporting a lost device; staff verify identity before approving.",
     },
     {
         "id": 3,
-        "name": "TODO: Name this decision point",
-        "trigger": "TODO: When does this trigger?",
-        "hitl_model": "TODO: human-in-the-loop / human-on-the-loop / human-as-tiebreaker",
-        "context_needed": "TODO: What does the reviewer need to see?",
-        "example": "TODO: Give a concrete example scenario",
+        "name": "Ambiguous or policy-sensitive complaints",
+        "trigger": "The model sees a complaint that could involve fraud, legal liability, or a disputed transaction.",
+        "hitl_model": "human-as-tiebreaker",
+        "context_needed": "Conversation history, relevant policy text, transaction summary, and any prior escalations.",
+        "example": "A customer says an ATM withheld cash and demands immediate reimbursement; a human decides whether to refund or investigate.",
     },
 ]
 

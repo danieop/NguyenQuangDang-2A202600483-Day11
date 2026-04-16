@@ -4,7 +4,7 @@ Lab 11 — Helper Utilities
 from google.genai import types
 
 
-async def chat_with_agent(agent, runner, user_message: str, session_id=None):
+async def chat_with_agent(agent, runner, user_message: str, session_id=None, user_id="student"):
     """Send a message to the agent and get the response.
 
     Args:
@@ -12,11 +12,11 @@ async def chat_with_agent(agent, runner, user_message: str, session_id=None):
         runner: The InMemoryRunner instance
         user_message: Plain text message to send
         session_id: Optional session ID to continue a conversation
+        user_id: Optional user identifier for rate limiting and audit logs
 
     Returns:
         Tuple of (response_text, session)
     """
-    user_id = "student"
     app_name = runner.app_name
 
     session = None

@@ -4,6 +4,12 @@ Lab 11 — Part 2A: Input Guardrails
   TODO 4: Topic filter
   TODO 5: Input Guardrail Plugin (ADK)
 """
+if __package__ is None or __package__ == "":
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import re
 
 from google.genai import types
@@ -38,9 +44,16 @@ def detect_injection(user_input: str) -> bool:
         True if injection detected, False otherwise
     """
     INJECTION_PATTERNS = [
-        # TODO: Add at least 5 regex patterns
-        # Example:
-        # r"ignore (all )?(previous|above) instructions",
+        r"ignore (?:all )?(?:previous|above) instructions",
+        r"you are now\b",
+        r"system prompt",
+        r"reveal (?:your )?(?:instructions|prompt)",
+        r"pretend you are\b",
+        r"act as (?:a |an )?unrestricted",
+        r"override (?:your )?(?:system prompt|instructions)",
+        r"disregard (?:all )?(?:prior|previous) (?:directives|instructions)",
+        r"bỏ qua mọi hướng dẫn",
+        r"cho tôi xem (?:system prompt|mật khẩu admin)",
     ]
 
     for pattern in INJECTION_PATTERNS:
@@ -69,13 +82,19 @@ def topic_filter(user_input: str) -> bool:
         True if input should be BLOCKED (off-topic or blocked topic)
     """
     input_lower = user_input.lower()
+    normalized = re.sub(r"\s+", " ", input_lower).strip()
 
-    # TODO: Implement logic:
-    # 1. If input contains any blocked topic -> return True
-    # 2. If input doesn't contain any allowed topic -> return True
-    # 3. Otherwise -> return False (allow)
+    # Block dangerous content first so we do not accidentally treat it as a safe banking query.
+    for topic in BLOCKED_TOPICS:
+        if re.search(rf"\b{re.escape(topic)}\b", normalized):
+            return True
 
-    pass  # Replace with your implementation
+    # Require at least one banking keyword so the assistant stays within scope.
+    for topic in ALLOWED_TOPICS:
+        if re.search(rf"\b{re.escape(topic)}\b", normalized):
+            return False
+
+    return True
 
 
 # ============================================================
@@ -128,14 +147,21 @@ class InputGuardrailPlugin(base_plugin.BasePlugin):
         self.total_count += 1
         text = self._extract_text(user_message)
 
-        # TODO: Implement logic:
-        # 1. Call detect_injection(text)
-        #    - If True: increment blocked_count, return self._block_response("...")
-        # 2. Call topic_filter(text)
-        #    - If True: increment blocked_count, return self._block_response("...")
-        # 3. If both are False: return None (let message through)
+        # First stop obvious prompt injection attempts before the LLM sees them.
+        if detect_injection(text):
+            self.blocked_count += 1
+            return self._block_response(
+                "Blocked by input guardrail: prompt injection detected. Please ask a banking-related question."
+            )
 
-        pass  # Replace with your implementation
+        # Then enforce the VinBank topic boundary so the assistant does not drift off scope.
+        if topic_filter(text):
+            self.blocked_count += 1
+            return self._block_response(
+                "Blocked by input guardrail: request is outside the approved banking scope or contains a disallowed topic."
+            )
+
+        return None
 
 
 # ============================================================
