@@ -106,8 +106,6 @@ python defense_pipeline.py
 
 1. **Security Report**: Before/after comparison of 5+ attacks (ADK + NeMo)
 2. **HITL Flowchart**: 3 decision points with escalation paths
-3. **Assignment Pipeline Output**: `audit_log.json` (20+ entries) from `src/defense_pipeline.py`
-4. **Individual Report**: `individual_report.md` (1-2 pages)
 
 ## 13 TODOs
 
