@@ -13,6 +13,7 @@ import asyncio
 from dataclasses import dataclass, field
 
 from core.utils import chat_with_agent
+from core.config import setup_api_key
 from attacks.attacks import adversarial_prompts, run_attacks, policy_judge_response
 from agents.agent import create_unsafe_agent, create_protected_agent
 from guardrails.input_guardrails import InputGuardrailPlugin
@@ -239,4 +240,5 @@ if __name__ == "__main__":
     from pathlib import Path
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+    setup_api_key()
     asyncio.run(test_pipeline())

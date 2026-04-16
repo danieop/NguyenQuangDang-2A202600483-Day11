@@ -249,7 +249,9 @@ if __name__ == "__main__":
     import sys
     from pathlib import Path
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from core.config import setup_api_key
 
     import asyncio
+    setup_api_key()
     init_nemo()
     asyncio.run(test_nemo_guardrails())
