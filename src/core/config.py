@@ -2,13 +2,42 @@
 Lab 11 — Configuration & API Key Setup
 """
 import os
+from pathlib import Path
 
 from google import genai
 from google.genai import types
 
 
+def _load_env_file_if_present():
+    """Load key/value pairs from .env into process env if not already set."""
+    candidate_paths = [
+        Path.cwd() / ".env",
+        Path(__file__).resolve().parents[2] / ".env",
+    ]
+
+    seen = set()
+    for env_path in candidate_paths:
+        resolved = env_path.resolve()
+        if resolved in seen or not resolved.is_file():
+            continue
+        seen.add(resolved)
+
+        for raw_line in resolved.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = value
+
+
 def setup_api_key():
     """Load ShopAIKey credentials and configure SDK environments."""
+    _load_env_file_if_present()
+
     if "SHOPAIKEY_API_KEY" not in os.environ:
         os.environ["SHOPAIKEY_API_KEY"] = input("Enter ShopAIKey API Key: ")
 

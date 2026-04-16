@@ -26,6 +26,7 @@ from google.adk.plugins import base_plugin
 
 from agents.agent import create_protected_agent, create_unsafe_agent
 from attacks.attacks import adversarial_prompts, run_attacks, policy_judge_response
+from core.config import setup_api_key
 from core.utils import chat_with_agent
 from guardrails.input_guardrails import InputGuardrailPlugin
 from guardrails.output_guardrails import OutputGuardrailPlugin, _init_judge
@@ -301,6 +302,7 @@ class DefensePipeline:
 
 async def demo():
     """Run the full assignment demo pipeline and print a concise summary."""
+    setup_api_key()
     pipeline = DefensePipeline(use_llm_judge=False)
     results = await pipeline.run_full_evaluation()
 
